@@ -3824,6 +3824,47 @@ router.get("/cheveaux/:begin/:end", async (req , res)=>{
     })
     
     await res.json(data.slice(begin , end))
+    data.forEach(e=>{
+        if(e.length <32) {
+        e.push(
+            data.find(element=>{
+                return(
+                    element[3] === e[0]
+                )
+            })
+        )
+        e.push(data.find(element=>{
+            return(
+                element[3]=== e[2]
+            )
+        }))
+        e.push(data.find(element=>{
+            return(
+               e[18] && element[3] === e[18][0]
+            )
+        }))
+        e.push(
+            {fertil : data_f.find(element=>{
+                return(
+                    element[0] === e[3]
+                )
+            }) || 'Null'}
+        )
+        e.push(
+            {carnet : carnet.find(element=>{
+                return(
+                    element[0] === e[3]
+                )
+            }) || 'Null'}
+        )
+    e.push({naisseur: data_c.filter(element=>{
+        return(
+            (1 + element[0]) == e[10] && e[2] === element[1]
+            )
+    }) || 'Null'})
+        
+    }
+    })
 
 })
 router.get("/test", async (req, res)=>{
