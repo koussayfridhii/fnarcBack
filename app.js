@@ -12,7 +12,7 @@ const cheval = require('./src/cheval.js');
 
 
   app.get("/", cors(), async (req , res)=>{
-      res.send("this is working")
+      res.send("this is working ! amazing")
   })
   
   
