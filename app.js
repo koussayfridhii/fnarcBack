@@ -7,12 +7,12 @@ const cheval = require('./src/cheval.js');
 
   app.use(express.urlencoded({extended:true,}))
   app.use(express.json())
-  app.use(cors())
+  app.use(cors({Origin:"*"}))
 
 
 
   app.get("/", cors(), async (req , res)=>{
-      res.send("this is working ! amazing")
+      res.send("this is working")
   })
   
   

@@ -1,13 +1,14 @@
 
 var Connection = require('tedious').Connection;  
 var Request = require('tedious').Request;  
+var TYPES = require('tedious').TYPES;
 const express = require('express');
 const carnet = require('./carnet');
 const data_c = require('./chevaux');
 const data_f = require('./fertilite');
+const app = express();
 const router = express.Router();
 let data = []
-const data_g = require('./gen')
 const data_sail = require('./saillie')
 
 var config = {  
@@ -32,8 +33,7 @@ connection.on('connect', function(err) {
     // If no error, then good to proceed.
     err && console.log(err)
     !err && console.log("Connected");  
-    executeStatement();
-   
+    executeStatement()
 });
 
 connection.connect();
@@ -55,7 +55,7 @@ function executeStatement() {
         console.log(data.length)
         
     });  
-    
+
     request.on('done', function(rowCount, more) {  
     console.log(rowCount + ' rows returned');  
     });  
@@ -74,7 +74,8 @@ router.get('/cheval/search/prod/:key', async (req , res)=>{
         return x[0] === id || x[2] === id;
     })
     cheval.forEach(e=>{
-        e.push(
+
+        if(e.length<29){e.push(
             data.find(element=>{
                 return(
                     element[3] === e[0]
@@ -88,9 +89,9 @@ router.get('/cheval/search/prod/:key', async (req , res)=>{
         }))
         e.push(data.find(element=>{
             return(
-               e[16] && element[3] === e[16][0]
+               e[27] && element[3] === e[27][0]
             )
-        }))
+        }))}
     })
     res.json(cheval)})
 
@@ -102,57 +103,56 @@ router.get('/cheval/search/prod/:key/:year', async (req , res)=>{
         return ((x[0] === id || x[2] === id)&& x[10]==annee);
     })
     res.json(cheval)})
-router.get('/cheval/search/:key', async (req , res)=>{
-    const id = req.params.key
-    const cheval = data.filter(x=>{
-        return x.find(y=>{
-            return y?.toString().toLowerCase().includes(id.toLowerCase()) ;
-        })
-        
-        
-    })
-    cheval.forEach(e=>{
-        if(e.length <32) {
-        e.push(
-            data.find(element=>{
-                return(
-                    element[3] === e[0]
-                )
+    router.get('/cheval/search/:key', async (req , res)=>{
+        const id = req.params.key
+        const cheval = data.filter(x=>{
+            return x.find(y=>{
+                return y?.toString().toLowerCase().includes(id.toLowerCase()) ;
             })
-        )
-        e.push(data.find(element=>{
-            return(
-                element[3]=== e[2]
+        })
+        cheval.forEach(e=>{
+            if(e.length <32) {
+            e.push(
+                data.find(element=>{
+                    return(
+                        element[3] === e[0]
+                    )
+                })
             )
-        }))
-        e.push(data.find(element=>{
-            return(
-               e[18] && element[3] === e[18][0]
-            )
-        }))
-        e.push(
-            {fertil : data_f.find(element=>{
+            e.push(data.find(element=>{
                 return(
-                    element[0] === e[3]
+                    element[3]=== e[2]
                 )
-            }) || 'Null'}
-        )
-        e.push(
-            {carnet : carnet.find(element=>{
+            }))
+            e.push(data.find(element=>{
                 return(
-                    element[0] === e[3]
+                   e[27] && element[3] === e[27][0]
                 )
-            }) || 'Null'}
-        )
-    e.push({naisseur: data_c.filter(element=>{
-        return(
-            (1 + element[0]) == e[10] && e[2] === element[1]
+            }))
+            e.push(
+                {fertil : data_f.find(element=>{
+                    return(
+                        element[0] === e[3]
+                    )
+                }) || 'Null'}
             )
-    }) || 'Null'})
-        
-    }
-    })
-    res.json(cheval)})
+            e.push(
+                {carnet : carnet.find(element=>{
+                    return(
+                        element[0] === e[3]
+                    )
+                }) || 'Null'}
+            )
+        e.push({naisseur: data_c.filter(element=>{
+            return(
+                (1 + element[0]) == e[10] && e[2] === element[1]
+                )
+        }) || 'Null'})
+            
+        }
+        })
+        res.json(cheval)})
+    
     
 
 
@@ -216,6 +216,7 @@ router.get('/cheval/:cid', async (req, res)=>{
             id_pere:'',
             id_mere:'',
         },
+
 	    grande_mere_pere_p:{
             id:'',
             nom:'',
@@ -774,31 +775,6 @@ router.get('/cheval/:cid', async (req, res)=>{
     result.cheval.pays = data.find(x=>{
         return x[3] === id
     })?.[14]
-    result.cheval.fertil=   data_f.find(element=>{
-        return(
-            element[0] === id
-        )
-    })
-    result.cheval.naisseur = data_c.find(element=>{
-        return(
-            (1 + element[0]) == result.cheval.date_N && result.cheval.id_mere === element[1]
-            )
-    })
-    result.cheval.studBook = data.find(x=>{
-        return(
-            x[3] === id
-        )
-    })?.[16]
-    result.cheval.puce = data.find(x=>{
-        return(
-            x[3] === id
-        )
-    })?.[17]  
-    result.cheval.genotyp = data_g.find(x=>{
-        return(
-            x[0] === id
-            )
-    })?.[0] || 'NULL'
     ///////////////////pere///////////////////////
     result.pere.nom = data.find(x=>{
         return x[3] === result.cheval?.id_pere
@@ -2215,9 +2191,8 @@ router.get('/cheval/:cid', async (req, res)=>{
 
 
 
-
-
 /*
+
     ///////////////////GrandMere_Mere_GrandeMere_M_m_m///////////////////////
     result.GrandMere_Mere_GrandeMere_M_m_m.nom = data.find(x=>{
         return x[3] === result.GrandeMere_GrandeMere_M_m?.id_mere
@@ -3445,6 +3420,7 @@ router.get('/cheval/:cid', async (req, res)=>{
 
 
 
+*/
 
 
 
@@ -3471,8 +3447,7 @@ router.get('/cheval/:cid', async (req, res)=>{
 
 
 
-
-
+/*
          ///////////////////GrandPere_Pere_GrandeMere_P_m_p//////////////_m/////////
          result.GrandPere_Pere_GrandeMere_P_m_p.nom = data.find(x=>{
             return x[3] === result.GrandPere_GrandeMere_P_p?.id_pere
@@ -3752,15 +3727,15 @@ router.get('/cheval/:cid', async (req, res)=>{
         result.GrandeMere_Mere_GrandeMere_P_m_p.pays = data.find(x=>{
             return x[3] === result.GrandPere_GrandeMere_P_m?.id_mere
         })?.[14]
+
+
+
+
+
+
+
+
 */
-
-
-
-
-
-
-
-
 
 
 
@@ -3780,8 +3755,7 @@ router.get("/cheveaux/:begin/:end", async (req , res)=>{
             return(i[2]== j[0] && j[2] == i[10])
         } )   
     }*/
-     
-    data.slice(begin, end).forEach(e=>{
+     data.slice(begin, end).forEach(e=>{
         if(e.length <32) {
         e.push(
             data.find(element=>{
@@ -3797,7 +3771,7 @@ router.get("/cheveaux/:begin/:end", async (req , res)=>{
         }))
         e.push(data.find(element=>{
             return(
-               e[18] && element[3] === e[18][0]
+               e[27] && element[3] === e[27][0]
             )
         }))
         e.push(
@@ -3822,49 +3796,9 @@ router.get("/cheveaux/:begin/:end", async (req , res)=>{
         
     }
     })
+
     
     await res.json(data.slice(begin , end))
-    data.forEach(e=>{
-        if(e.length <32) {
-        e.push(
-            data.find(element=>{
-                return(
-                    element[3] === e[0]
-                )
-            })
-        )
-        e.push(data.find(element=>{
-            return(
-                element[3]=== e[2]
-            )
-        }))
-        e.push(data.find(element=>{
-            return(
-               e[18] && element[3] === e[18][0]
-            )
-        }))
-        e.push(
-            {fertil : data_f.find(element=>{
-                return(
-                    element[0] === e[3]
-                )
-            }) || 'Null'}
-        )
-        e.push(
-            {carnet : carnet.find(element=>{
-                return(
-                    element[0] === e[3]
-                )
-            }) || 'Null'}
-        )
-    e.push({naisseur: data_c.filter(element=>{
-        return(
-            (1 + element[0]) == e[10] && e[2] === element[1]
-            )
-    }) || 'Null'})
-        
-    }
-    })
 
 })
 router.get("/test", async (req, res)=>{
@@ -3906,22 +3840,13 @@ router.get('/saillie/search/:id', async (req , res)=>{
             })])
         })*/
         let x=data_sail.filter(s=>s[2]==id || s[4]==id).map(s=>{
-            if(s.length== 14) {return([...s, data.find(c=>{
+            if (s.length== 14) {return ;}
+               return([...s, data.find(c=>{
                     return(
-            c[2] == s[2] && c[0]==s[4] && +c[10]== (+s[1] + 1)
+            c[2] == s[2] && c[0]==s[4] && c[10]== (1 + s[1])
     
         )
-    })])}
-    })
-    x.forEach(e=>{
-        e.push(data.find(element=>{
-            return(element[3]=== e[2] )
-        }))
-    })
-    x.forEach(e=>{
-        e.push(data.find(element=>{
-            return(element[3]=== e[4] )
-        }))
+    })])
     })
         await res.json(x)
 })
@@ -3937,6 +3862,7 @@ router.get('/saillie/search/:id/:year', async (req , res)=>{
             })])
         })*/
         let x=data_sail.filter(s=>s[1]==annee && (s[2]==id || s[4]==id)).map(s=>{
+            if (s.length== 14) {return ;}
                return([...s, data.find(c=>{
                     return(
             c[2] == s[2] && c[0]==s[4] && c[10]== s[1]
